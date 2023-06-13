@@ -152,7 +152,8 @@ InfoNES::~InfoNES() = default;
 void core1_lcd_draw_line(const uint_fast8_t line, const uint_fast8_t index) {
     // crop pixel buffer, assume a 240x240 display size for now...
     auto display = platform->getDisplay();
-    display->drawPixelLine(0, line, 240, lineBufferRGB444[index] + 8, Display::Format::RGB444);
+    display->setCursor(0, line);
+    display->drawPixelLine(lineBufferRGB444[index] + 8, 240, Display::Format::RGB444);
 
     // signal we are done
     //__atomic_store_n(&lcd_line_busy, 0, __ATOMIC_SEQ_CST);
@@ -289,7 +290,7 @@ static uint16_t audio_buffer[1024];
 static int audio_index = 0;
 
 void __not_in_flash_func(InfoNES_SoundOutput)
-        (int samples, BYTE *wave1, BYTE *wave2, BYTE *wave3, BYTE *wave4, BYTE *wave5) {
+(int samples, BYTE *wave1, BYTE *wave2, BYTE *wave3, BYTE *wave4, BYTE *wave5) {
     //printf("InfoNES_SoundOutput: samples = %i\r\n", samples);
     for (uint_fast32_t i = 0; i < samples; i++) {
         int32_t sample = (wave1[i] + wave2[i] + wave3[i] + wave4[i] + wave5[i]) / 5;

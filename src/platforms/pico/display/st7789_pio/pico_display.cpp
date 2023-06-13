@@ -16,71 +16,14 @@ PicoDisplay::PicoDisplay() : Display({DISPLAY_WIDTH, DISPLAY_HEIGHT}) {
     // init st7789 display
     st7789_init();
 
-    // set default screen rotation (TODO)
-    //rotation = 1;
-
     // clear the display
     PicoDisplay::clear();
 }
 
-// very slow, obviously...
-void PicoDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
-    if ((x < 0) || (y < 0) || x > m_size.x || y > m_size.y) return;
-
-    int16_t t;
-    switch (rotation) {
-        case 1:
-            t = x;
-            x = (int16_t) (m_size.x - 1 - y);
-            y = t;
-            break;
-        case 2:
-            x = (int16_t) (m_size.x - 1 - x);
-            y = (int16_t) (m_size.y - 1 - y);
-            break;
-        case 3:
-            t = x;
-            x = y;
-            y = (int16_t) (m_size.y - 1 - t);
-            break;
-    }
-
+void PicoDisplay::setCursor(uint16_t x, uint16_t y) {
     st7789_set_cursor(x, y);
+}
+
+void PicoDisplay::putCursor(uint16_t color) {
     st7789_put(color);
 }
-
-// very fast :)
-void PicoDisplay::drawPixelLine(uint16_t x, uint16_t y, uint16_t width,
-                                const uint16_t *pixels, const Format &format) {
-    st7789_set_cursor(x, y);
-    if (format == Format::RGB565) {
-        for (int_fast16_t i = 0; i < width; i++) {
-            st7789_put(pixels[i]);
-        }
-    } else {
-        for (int_fast16_t i = 0; i < width; i++) {
-            uint_fast16_t p = pixels[i];
-            uint_fast8_t red = (p >> 8) & 0xF;
-            uint_fast8_t green = (p >> 4) & 0xF;
-            uint_fast8_t blue = p & 0xF;
-            red = (red << 1) | (red >> 3);
-            green = (green << 2) | (green >> 2);
-            blue = (blue << 1) | (blue >> 3);
-            st7789_put((red << 11) | (green << 5) | blue);
-        }
-    }
-}
-
-void PicoDisplay::clear() {
-    st7789_start_pixels();
-    for (int y = 0; y < m_size.x; ++y) {
-        for (int x = 0; x < m_size.y; ++x) {
-            st7789_put(0x0000);
-        }
-    }
-}
-
-void PicoDisplay::flip() {
-}
-
-PicoDisplay::~PicoDisplay() = default;

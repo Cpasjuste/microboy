@@ -93,7 +93,8 @@ static Utility::Vec2i drawingPos{};
 
 void core1_lcd_draw_line(const uint_fast8_t line) {
     auto display = gb_priv.gb->getPlatform()->getDisplay();
-    display->drawPixelLine(drawingPos.x, drawingPos.y + line, LCD_WIDTH, pixels_buffer);
+    display->setCursor(drawingPos.x, drawingPos.y + line);
+    display->drawPixelLine(pixels_buffer, LCD_WIDTH);
 
     if (line == LCD_HEIGHT - 1) {
         display->flip();
@@ -118,7 +119,7 @@ void core1_lcd_flip(const uint_fast8_t idx) {
 
     display->flip();
 
-    __atomic_store_n(&lcd_line_busy, 0, __ATOMIC_SEQ_CST);
+    //__atomic_store_n(&lcd_line_busy, 0, __ATOMIC_SEQ_CST);
 }
 
 _Noreturn void main_core1() {
@@ -154,8 +155,8 @@ void lcd_draw_line(struct gb_s *gb, const uint8_t pixels[LCD_WIDTH], const uint_
 
         if (line == LCD_HEIGHT - 1) {
             // wait until previous surface flip complete
-            while (__atomic_load_n(&lcd_line_busy, __ATOMIC_SEQ_CST))
-                tight_loop_contents();
+            //while (__atomic_load_n(&lcd_line_busy, __ATOMIC_SEQ_CST))
+            //  tight_loop_contents();
 
             union core_cmd cmd{};
             cmd.cmd = CORE_CMD_LCD_FLIP;
@@ -166,14 +167,13 @@ void lcd_draw_line(struct gb_s *gb, const uint8_t pixels[LCD_WIDTH], const uint_
             core1_lcd_flip(cmd.data);
 #else
             // send cmd
-            __atomic_store_n(&lcd_line_busy, 1, __ATOMIC_SEQ_CST);
+            //__atomic_store_n(&lcd_line_busy, 1, __ATOMIC_SEQ_CST);
             multicore_fifo_push_blocking(cmd.full);
 #endif
         }
     } else {
         // wait until previous line is sent
-        while (__atomic_load_n(&lcd_line_busy, __ATOMIC_SEQ_CST))
-            tight_loop_contents();
+        while (__atomic_load_n(&lcd_line_busy, __ATOMIC_SEQ_CST)) tight_loop_contents();
 
         for (uint_fast8_t x = 0; x < LCD_WIDTH; x++) {
             pixels_buffer[x] = palette[(pixels[x] & LCD_PALETTE_ALL) >> 4][pixels[x] & 3];
@@ -186,7 +186,6 @@ void lcd_draw_line(struct gb_s *gb, const uint8_t pixels[LCD_WIDTH], const uint_
 #if LINUX
         core1_lcd_draw_line(cmd.data);
 #else
-
         __atomic_store_n(&lcd_line_busy, 1, __ATOMIC_SEQ_CST);
         multicore_fifo_push_blocking(cmd.full);
 #endif
@@ -250,7 +249,7 @@ bool PeanutGB::loadRom(const uint8_t *buffer, size_t size) {
     gb_init_lcd(&gameboy, &lcd_draw_line);
 
     // not enough fps when scaling is used (with double buffering, st7789), enable interlacing
-    if (m_doubleBuffer) gameboy.direct.interlace = 1;
+    //if (m_doubleBuffer) gameboy.direct.interlace = 1;
 
     return true;
 }

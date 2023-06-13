@@ -36,31 +36,36 @@ namespace mb {
         // destroy the display (hardware dependant, to be implemented)
         ~Display() override = default;
 
-        // clear the display (hardware dependant, to be implemented)
-        virtual void clear() {}
-
         // flip the display (hardware dependant, to be implemented)
         virtual void flip() {}
 
-        // draw a pixel to the display (hardware dependant, to be implemented)
-        void drawPixel(int16_t x, int16_t y, uint16_t color) override {};
+        // set display buffer position (hardware dependant, to be implemented)
+        virtual void setCursor(uint16_t x, uint16_t y) {};
+
+        // put a pixel to the display (hardware dependant, to be implemented)
+        virtual void putCursor(uint16_t color) {};
+
+        // clear the display
+        void clear();
+
+        // draw a pixel to the display
+        void drawPixel(int16_t x, int16_t y, uint16_t color) override;
 
         void drawPixel(const Utility::Vec2i &pos, uint16_t color) {
             drawPixel(pos.x, pos.y, color);
         }
 
-        virtual void drawPixelLine(uint16_t x, uint16_t y, uint16_t width,
-                                   const uint16_t *pixels, const Format &format = RGB565) {};
+        void drawPixelLine(const uint16_t *pixels, uint16_t width, const Format &format = RGB565);
 
         // draw a surface (pixel buffer) to the display with scaling if requested
-        virtual void drawSurface(Surface *surface, const Utility::Vec2i &pos, const Utility::Vec2i &size);
+        void drawSurface(Surface *surface, const Utility::Vec2i &pos, const Utility::Vec2i &size);
 
-        virtual void drawSurface(Surface *surface, const Utility::Vec2i &pos) {
+        void drawSurface(Surface *surface, const Utility::Vec2i &pos) {
             if (!surface) return;
             drawSurface(surface, pos, surface->getSize());
         }
 
-        virtual void drawSurface(Surface *surface) {
+        void drawSurface(Surface *surface) {
             if (!surface) return;
             drawSurface(surface, {0, 0}, surface->getSize());
         }
